@@ -25,6 +25,10 @@ export class BudgetOverview {
     this.subscription = this.expenseService.expenses$.subscribe(() => {
       this.budgets = this.expenseService.getBudgets();
     });
+    // Subscribe to categories for color/icon info
+  this.expenseService.categories$.subscribe(categories => {
+    this.categories = categories;
+  });
   }
   ngOnDestroy(): void {
     if (this.subscription) {

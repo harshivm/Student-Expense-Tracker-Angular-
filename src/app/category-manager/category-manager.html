@@ -1,0 +1,132 @@
+<div class="category-manager">
+  <div class="manager-header">
+    <h2>🎯 Manage Categories & Budgets</h2>
+    <p>Customize your spending categories and set budget limits</p>
+  </div>
+
+  <!-- Add New Category -->
+  <div class="add-category-section">
+    <h3>➕ Add New Category</h3>
+    <div class="add-category-form">
+      <input 
+        type="text" 
+        [(ngModel)]="newCategoryName" 
+        placeholder="Category name (e.g., Rent, Gym)"
+        class="category-name-input">
+      
+      <div class="color-picker">
+        <span class="picker-label">Color:</span>
+        <div class="color-options">
+          <div 
+            *ngFor="let color of colors" 
+            class="color-option" 
+            [style.background]="color"
+            [class.selected]="newCategoryColor === color"
+            (click)="newCategoryColor = color">
+          </div>
+        </div>
+      </div>
+      
+      <div class="icon-picker">
+        <span class="picker-label">Icon:</span>
+        <div class="icon-options">
+          <div 
+            *ngFor="let icon of icons" 
+            class="icon-option"
+            [class.selected]="newCategoryIcon === icon"
+            (click)="newCategoryIcon = icon">
+            {{icon}}
+          </div>
+        </div>
+      </div>
+      
+      <button class="add-btn" (click)="addCategory()" [disabled]="!newCategoryName.trim()">
+        ➕ Add Category
+      </button>
+    </div>
+  </div>
+
+  <!-- Categories List -->
+  <div class="categories-section">
+    <h3>📋 Your Categories</h3>
+    
+    <div class="categories-list">
+      <div *ngFor="let category of getRemainingCategories()" class="category-item">
+        <!-- Edit Mode -->
+        <div *ngIf="editingCategory?.name === category.name" class="edit-mode">
+          <input 
+            type="text" 
+            [(ngModel)]="editCategoryName" 
+            class="edit-name-input">
+          
+          <div class="edit-controls">
+            <div class="color-options">
+              <div 
+                *ngFor="let color of colors" 
+                class="color-option" 
+                [style.background]="color"
+                [class.selected]="editCategoryColor === color"
+                (click)="editCategoryColor = color">
+              </div>
+            </div>
+            
+            <div class="icon-options">
+              <div 
+                *ngFor="let icon of icons" 
+                class="icon-option"
+                [class.selected]="editCategoryIcon === icon"
+                (click)="editCategoryIcon = icon">
+                {{icon}}
+              </div>
+            </div>
+            
+            <div class="edit-buttons">
+              <button class="save-btn" (click)="saveEdit()">💾 Save</button>
+              <button class="cancel-btn" (click)="cancelEdit()">✖ Cancel</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Display Mode -->
+        <div *ngIf="editingCategory?.name !== category.name" class="display-mode">
+          <div class="category-info">
+            <div class="category-preview" [style.background]="category.color">
+              {{category.icon}}
+            </div>
+            <div class="category-details">
+              <div class="category-name">{{category.name}}</div>
+              <div class="category-type">{{category.isDefault ? 'Default' : 'Custom'}}</div>
+            </div>
+          </div>
+          
+          <!-- Budget Setting -->
+          <div class="budget-setting">
+            <label>Budget Limit: €</label>
+            <input 
+              type="number" 
+              [value]="getBudgetForCategory(category.name)?.limit || 0"
+              (change)="updateBudgetLimit(category.name, $event)"
+              min="0"
+              step="10"
+              class="budget-input">
+          </div>
+          
+          <!-- Actions -->
+          <div class="category-actions">
+            <button class="edit-btn" (click)="startEdit(category)" *ngIf="!category.isDefault">
+              ✏️ Edit
+            </button>
+            <button class="delete-btn" (click)="deleteCategory(category)" *ngIf="!category.isDefault">
+              🗑️ Delete
+            </button>
+            <span class="default-badge" *ngIf="category.isDefault">Default</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="getRemainingCategories().length === 0" class="no-categories">
+      No categories yet. Add your first category above!
+    </div>
+  </div>
+</div>

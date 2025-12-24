@@ -1,16 +1,16 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ExpenseService } from '../services/expense.service';
 import { Expense } from '../models/expense.model';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-expense-list',
-  imports: [FormsModule, CommonModule], // Add this
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './expense-list.html',
-  styleUrl: './expense-list.css',
-  animations: [ // ADD THIS BLOCK
+  styleUrls: ['./expense-list.css'],
+  animations: [
     trigger('slideOut', [
       transition(':leave', [
         animate('300ms ease-in', style({
@@ -30,13 +30,11 @@ import { trigger, transition, style, animate } from '@angular/animations';
     ])
   ]
 })
-export class ExpenseList {
-  @Output() expenseDeleted = new EventEmitter<void>();
- deletedExpense: Expense | null = null; // ADD THIS LINE
-  showUndoMessage: boolean = false; // ADD THIS LINE
-  undoTimeout: any = null; // ADD THIS LINE
-  
+export class ExpenseListComponent implements OnInit {
   expenses: Expense[] = [];
+  deletedExpense: Expense | null = null;
+  showUndoMessage: boolean = false;
+  undoTimeout: any = null;
 
   constructor(private expenseService: ExpenseService) {}
 
@@ -45,35 +43,37 @@ export class ExpenseList {
 
     // Subscribe to expense updates
     this.expenseService.expenses$.subscribe(expenses => {
-      this.expenses = expenses;
+      this.expenses = this.sortExpensesByDate(expenses);
     });
   }
 
   loadExpenses(): void {
-    this.expenses = this.expenseService.getExpenses();
+    const expenses = this.expenseService.getExpenses();
+    this.expenses = this.sortExpensesByDate(expenses);
   }
 
-    deleteExpense(id: string): void {
-    // Store the expense before deleting (for undo)
+  private sortExpensesByDate(expenses: Expense[]): Expense[] {
+    return [...expenses].sort((a, b) => {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  }
+
+  deleteExpense(id: string): void {
     const expenseToDelete = this.expenses.find(exp => exp.id === id);
     
     if (expenseToDelete) {
       this.deletedExpense = { ...expenseToDelete };
-      this.expenseService.deleteExpense(id); // DELETE WITHOUT CONFIRMATION
+      this.expenseService.deleteExpense(id);
       
-      // Show undo message
       this.showUndoMessage = true;
-      
-      // Auto hide undo message after 5 seconds
       this.undoTimeout = setTimeout(() => {
         this.hideUndoMessage();
       }, 5000);
     }
   }
-    // ADD these new methods (add after deleteExpense method):
+
   undoDelete(): void {
     if (this.deletedExpense) {
-      // Add the expense back
       this.expenseService.addExpense({
         amount: this.deletedExpense.amount,
         category: this.deletedExpense.category,
@@ -101,6 +101,5 @@ export class ExpenseList {
     const cat = categories.find(c => c.name === category);
     return cat ? cat.color : '#999';
   }
-
 }
-
+// NO export { ExpenseList }; at the end!

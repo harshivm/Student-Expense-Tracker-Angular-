@@ -3,14 +3,15 @@ import { ExpenseService } from '../services/expense.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Analytics } from "../analytics/analytics";
-import { ExpenseList } from "../expense-list/expense-list";
+import { ExpenseListComponent } from "../expense-list/expense-list";
 import { BudgetOverview } from "../budget-overview/budget-overview";
 import { AddExpense } from "../add-expense/add-expense";
+import { CategoryManager } from '../category-manager/category-manager';
 import { Subscription } from 'rxjs'; // Add this
 // import { PullToRefresh } from "../pull-to-refresh/pull-to-refresh"; // Add this
 @Component({
   selector: 'app-dashboard',
-  imports: [ FormsModule, CommonModule, Analytics, ExpenseList, BudgetOverview, AddExpense], // Add this
+  imports: [ FormsModule, CommonModule, Analytics, ExpenseListComponent, BudgetOverview, AddExpense, CategoryManager],// Add this
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
