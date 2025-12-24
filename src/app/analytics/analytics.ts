@@ -3,6 +3,7 @@ import { ExpenseService } from '../services/expense.service';
 import { Expense, Category } from '../models/expense.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs'; // Add this
 @Component({
   selector: 'app-analytics',
   imports: [FormsModule, CommonModule], // Add this
@@ -13,6 +14,7 @@ export class Analytics {
  expenses: Expense[] = [];
   categories: Category[] = [];
   categoryTotals: {category: string, total: number, percentage: number}[] = [];
+private subscription!: Subscription; // Add this
 
   constructor(private expenseService: ExpenseService) {}
 
@@ -20,6 +22,17 @@ export class Analytics {
     this.expenses = this.expenseService.getExpenses();
     this.categories = this.expenseService.getCategories();
     this.calculateCategoryTotals();
+
+    // Subscribe to expense updates
+    this.subscription = this.expenseService.expenses$.subscribe(expenses => {
+      this.expenses = expenses;
+      this.calculateCategoryTotals();
+    });
+  }
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 
   calculateCategoryTotals(): void {

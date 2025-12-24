@@ -3,6 +3,7 @@ import { ExpenseService } from '../services/expense.service';
 import { Budget, Category } from '../models/expense.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs'; // Add this
 @Component({
   selector: 'app-budget-overview',
   imports: [FormsModule, CommonModule], // Add this
@@ -14,10 +15,21 @@ export class BudgetOverview {
   categories: Category[] = [];
 
   constructor(private expenseService: ExpenseService) {}
+  private subscription!: Subscription; // Add this
 
   ngOnInit(): void {
     this.budgets = this.expenseService.getBudgets();
     this.categories = this.expenseService.getCategories();
+
+     // Subscribe to expense updates to refresh budgets
+    this.subscription = this.expenseService.expenses$.subscribe(() => {
+      this.budgets = this.expenseService.getBudgets();
+    });
+  }
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 
   getCategoryColor(category: string): string {

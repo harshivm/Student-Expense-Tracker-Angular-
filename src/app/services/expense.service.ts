@@ -1,18 +1,32 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { Expense, Budget, Category } from '../models/expense.model';
 import { isPlatformBrowser } from '@angular/common';
+import { BehaviorSubject } from 'rxjs'; // Add this
 
 @Injectable({
   providedIn: 'root'
 })
 export class ExpenseService {
   private expenses: Expense[] = [];
+  
+  // Create BehaviorSubjects for reactive updates
+  private expensesSubject = new BehaviorSubject<Expense[]>([]);
+  private totalsSubject = new BehaviorSubject<{income: number, expenses: number, balance: number}>({
+    income: 0,
+    expenses: 0,
+    balance: 0
+  });
+  
+  // Expose as observables
+  expenses$ = this.expensesSubject.asObservable();
+  totals$ = this.totalsSubject.asObservable();
+  
   private budgets: Budget[] = [
-    { category: 'Food', limit: 300, spent: 0 },           // €300
-    { category: 'Transport', limit: 100, spent: 0 },      // €100
-    { category: 'Entertainment', limit: 150, spent: 0 },  // €150
-    { category: 'Books', limit: 200, spent: 0 },          // €200
-    { category: 'Other', limit: 100, spent: 0 }           // €100
+    { category: 'Food', limit: 300, spent: 0 },
+    { category: 'Transport', limit: 100, spent: 0 },
+    { category: 'Entertainment', limit: 150, spent: 0 },
+    { category: 'Books', limit: 200, spent: 0 },
+    { category: 'Other', limit: 100, spent: 0 }
   ];
 
   private categories: Category[] = [
@@ -26,6 +40,7 @@ export class ExpenseService {
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     this.loadFromLocalStorage();
+    this.updateSubjects(); // Initialize subjects
   }
 
   getExpenses(): Expense[] {
@@ -54,6 +69,7 @@ export class ExpenseService {
     }
     
     this.saveToLocalStorage();
+    this.updateSubjects(); // Update reactive subjects
   }
 
   deleteExpense(id: string): void {
@@ -66,6 +82,7 @@ export class ExpenseService {
       }
       this.expenses.splice(index, 1);
       this.saveToLocalStorage();
+      this.updateSubjects(); // Update reactive subjects
     }
   }
 
@@ -93,18 +110,24 @@ export class ExpenseService {
   }
 
   private saveToLocalStorage(): void {
-    // Only use localStorage if we're in the browser
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('expenses', JSON.stringify(this.expenses));
+      localStorage.setItem('budgets', JSON.stringify(this.budgets));
     }
   }
 
   private loadFromLocalStorage(): void {
-    // Only use localStorage if we're in the browser
     if (isPlatformBrowser(this.platformId)) {
-      const stored = localStorage.getItem('expenses');
-      if (stored) {
-        this.expenses = JSON.parse(stored);
+      const storedExpenses = localStorage.getItem('expenses');
+      const storedBudgets = localStorage.getItem('budgets');
+      
+      if (storedExpenses) {
+        this.expenses = JSON.parse(storedExpenses);
+      }
+      
+      if (storedBudgets) {
+        this.budgets = JSON.parse(storedBudgets);
+      } else {
         // Recalculate budget spending
         this.budgets.forEach(budget => budget.spent = 0);
         this.expenses.forEach(expense => {
@@ -114,5 +137,17 @@ export class ExpenseService {
         });
       }
     }
+  }
+
+  // New method to update reactive subjects
+  private updateSubjects(): void {
+    this.expensesSubject.next([...this.expenses]);
+    
+    const totals = {
+      income: this.getTotalIncome(),
+      expenses: this.getTotalExpenses(),
+      balance: this.getBalance()
+    };
+    this.totalsSubject.next(totals);
   }
 }

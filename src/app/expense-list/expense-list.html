@@ -26,4 +26,13 @@
       </div>
     </div>
   </div>
+  @if (showUndoMessage) {
+  <div class="undo-notification" [@fadeIn]>
+    <div class="undo-message">
+      <span>🗑️ Transaction deleted</span>
+    </div>
+    <button class="undo-btn" (click)="undoDelete()">Undo</button>
+    <button class="undo-close" (click)="hideUndoMessage()">×</button>
+  </div>
+}
 </div>

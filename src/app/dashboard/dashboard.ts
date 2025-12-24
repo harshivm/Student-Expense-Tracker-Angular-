@@ -6,11 +6,11 @@ import { Analytics } from "../analytics/analytics";
 import { ExpenseList } from "../expense-list/expense-list";
 import { BudgetOverview } from "../budget-overview/budget-overview";
 import { AddExpense } from "../add-expense/add-expense";
-
+import { Subscription } from 'rxjs'; // Add this
 // import { PullToRefresh } from "../pull-to-refresh/pull-to-refresh"; // Add this
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, CommonModule, Analytics, ExpenseList, BudgetOverview, AddExpense], // Add this
+  imports: [ FormsModule, CommonModule, Analytics, ExpenseList, BudgetOverview, AddExpense], // Add this
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -20,19 +20,38 @@ export class Dashboard {
   balance: number = 0;
   isLoading = false;
   lastUpdated = new Date();
-
+  private totalsSubscription!: Subscription; // Add this
+  
   constructor(
     private expenseService: ExpenseService,
     private elementRef: ElementRef
   ) {}
+  
 
   ngOnInit(): void {
     this.updateTotals();
+
+    this.totalsSubscription = this.expenseService.totals$.subscribe(totals => {
+      this.totalIncome = totals.income;
+      this.totalExpenses = totals.expenses;
+      this.balance = totals.balance;
+      console.log('Dashboard updated automatically!', totals);
+    });
+
   }
 
-  ngAfterViewInit(): void {
-    this.preventBrowserPullToRefresh();
+  ngOnDestroy(): void {
+    // Clean up subscription
+    if (this.totalsSubscription) {
+      this.totalsSubscription.unsubscribe();
+    }
   }
+
+  
+
+  // ngAfterViewInit(): void {
+  //   this.preventBrowserPullToRefresh();
+  // }
 
   updateTotals(): void {
     this.totalExpenses = this.expenseService.getTotalExpenses();
